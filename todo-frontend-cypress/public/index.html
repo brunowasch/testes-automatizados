@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToDo List</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>ToDo List</h1>
+
+  <section id="form-section">
+    <input type="text" id="titulo" placeholder="Título" />
+    <input type="text" id="descricao" placeholder="Descrição" />
+    <input type="datetime-local" id="encerramento" />
+    <button id="btn-criar">Criar Tarefa</button>
+  </section>
+
+  <section>
+    <h2>Tarefas Pendentes</h2>
+    <ul id="tarefas-pendentes"></ul>
+  </section>
+
+  <section>
+    <h2>Todas as Tarefas</h2>
+    <input type="number" id="busca-id" placeholder="Buscar por ID" />
+    <button id="btn-buscar">Buscar</button>
+    <ul id="tarefas-geral"></ul>
+    <ul id="busca-especifica"></ul>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
