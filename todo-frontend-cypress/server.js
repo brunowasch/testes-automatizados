@@ -16,6 +16,7 @@ app.post('/tarefas', (req, res) => {
   res.status(201).json(novaTarefa);
 });
 
+
 app.get('/tarefas', (req, res) => {
   res.json(tarefas);
 });
