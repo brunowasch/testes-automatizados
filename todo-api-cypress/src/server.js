@@ -1,13 +1,22 @@
 const express = require('express');
+const cors = require('cors');
+
 const app = express();
+app.use(cors()); // habilita CORS para o frontend em outra porta
 app.use(express.json());
 
 let tarefas = [];
 let idAtual = 1;
 
+app.post('/__reset', (req, res) => {
+  tarefas = [];
+  idAtual = 1;
+  res.status(204).end();
+});
+
 // 1. Criar tarefa
 app.post('/tarefas', (req, res) => {
-  const { titulo, descricao, status, encerramento } = req.body;
+  const { titulo, descricao, status = 'pendente', encerramento } = req.body;
   const novaTarefa = { id: idAtual++, titulo, descricao, status, encerramento };
   tarefas.push(novaTarefa);
   res.status(201).json(novaTarefa);

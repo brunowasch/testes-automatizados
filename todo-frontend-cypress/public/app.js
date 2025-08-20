@@ -1,65 +1,87 @@
 const API_URL = "http://localhost:3000/tarefas";
 
-document.getElementById('btn-criar').addEventListener('click', () => {
-  const titulo = document.getElementById('titulo').value;
-  const descricao = document.getElementById('descricao').value;
-  const encerramento = document.getElementById('encerramento').value;
+const $ = (sel) => document.querySelector(sel);
 
-  fetch(API_URL, {
+$('#btn-criar').addEventListener('click', async () => {
+  const titulo = $('#titulo').value.trim();
+  const descricao = $('#descricao').value.trim();
+  const encerramento = $('#encerramento').value;
+
+  if (!titulo) { alert('Título é obrigatório'); return; }
+
+  await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ titulo, descricao, encerramento, status: "pendente" })
-  }).then(() => carregarTarefas());
+  });
+  await carregarTarefas();
+  $('#titulo').value = '';
+  $('#descricao').value = '';
+  $('#encerramento').value = '';
 });
 
-document.getElementById('btn-buscar').addEventListener('click', () => {
-  const id = document.getElementById('busca-id').value;
-  fetch(`${API_URL}/${id}`)
-    .then(res => res.json())
-    .then(tarefa => {
-      const ul = document.getElementById('busca-especifica');
-      ul.innerHTML = `<li>${tarefa.titulo} - ${tarefa.status}</li>`;
-    });
+$('#btn-buscar').addEventListener('click', async () => {
+  const id = $('#busca-id').value;
+  const ul = $('#busca-especifica');
+  ul.innerHTML = '';
+  if (!id) return;
+
+  const res = await fetch(`${API_URL}/${id}`);
+  if (!res.ok) {
+    ul.innerHTML = `<li>Não encontrado</li>`;
+    return;
+  }
+  const tarefa = await res.json();
+  ul.innerHTML = `<li data-id="${tarefa.id}">${tarefa.titulo} - ${tarefa.status}</li>`;
 });
 
-function carregarTarefas() {
-  fetch(API_URL)
-    .then(res => res.json())
-    .then(tarefas => {
-      const pendentes = document.getElementById('tarefas-pendentes');
-      const geral = document.getElementById('tarefas-geral');
-      pendentes.innerHTML = "";
-      geral.innerHTML = "";
+async function carregarTarefas() {
+  const res = await fetch(API_URL);
+  const tarefas = await res.json();
+  const pendentes = $('#tarefas-pendentes');
+  const geral = $('#tarefas-geral');
+  pendentes.innerHTML = "";
+  geral.innerHTML = "";
 
-      tarefas.forEach(t => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${t.titulo}</strong> - ${t.status}
-          <button onclick="alterarStatus(${t.id})">Concluir</button>
-          <button onclick="excluirTarefa(${t.id})">Excluir</button>
-        `;
-        geral.appendChild(li);
+  tarefas.forEach(t => {
+    const li = document.createElement('li');
+    li.setAttribute('data-id', t.id);
+    li.innerHTML = `
+      <strong>${t.titulo}</strong> - <span class="status">${t.status}</span>
+      <button class="btn-concluir">Concluir</button>
+      <button class="btn-excluir">Excluir</button>
+    `;
+    geral.appendChild(li);
 
-        if (t.status === "pendente") {
-          const liPend = document.createElement('li');
-          liPend.textContent = `${t.titulo} - ${t.descricao}`;
-          pendentes.appendChild(liPend);
-        }
+    if (t.status === "pendente") {
+      const liPend = document.createElement('li');
+      liPend.textContent = `${t.titulo} - ${t.descricao ?? ''}`;
+      pendentes.appendChild(liPend);
+    }
+  });
+
+  geral.querySelectorAll('.btn-concluir').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.closest('li').getAttribute('data-id');
+      await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "concluída" })
       });
+      await carregarTarefas();
     });
+  });
+
+  geral.querySelectorAll('.btn-excluir').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.target.closest('li').getAttribute('data-id');
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      await carregarTarefas();
+    });
+  });
 }
 
-function alterarStatus(id) {
-  fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "concluída" })
-  }).then(() => carregarTarefas());
-}
-
-function excluirTarefa(id) {
-  fetch(`${API_URL}/${id}`, { method: "DELETE" })
-    .then(() => carregarTarefas());
-}
-
-carregarTarefas();
+carregarTarefas().catch(() => {
+  $('#tarefas-geral').innerHTML = '<li>API offline</li>';
+  $('#tarefas-pendentes').innerHTML = '<li>API offline</li>';
+});
